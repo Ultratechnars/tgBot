@@ -85,6 +85,7 @@ def get_event(message):
         'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
     if response['count'] == 0:
         bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
+        bot.register_next_step_handler(message, get_event)
         return
     i = 0
     ok = False
