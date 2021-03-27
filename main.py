@@ -83,7 +83,7 @@ def get_event(message):
     elif message.text == 'Экскурсии🚌':
         categories = 'tour'
     response = requests.get(
-        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
+        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction,images&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
     if response['count'] == 0:
         bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
         bot.register_next_step_handler(message, get_event)
@@ -128,17 +128,19 @@ def get_event(message):
     title = res[i]['title']
     title = capt(title)
     place = capt(place)
+    imgsrc = res[i]['images'][0]['image']
+    img = requests.get(imgsrc)
     if message.from_user.id not in used:
         used[str(message.from_user.id)] = [res[i]['id']]
     else:
         used[str(message.from_user.id)].append(res[i]['id'])
-    bot.send_message(message.from_user.id, title + '\n' \
+    bot.send_photo(message.from_user.id, img.content, title + '\n' \
                      + res[i]['description'] + '\n' \
                      + str(
         datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
                      + ' - ' + str(
         datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
-                     + '\n' + place + '\n' + agestr)
+                     + '\n' + place)
 
     return
 
