@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import utils
 
-bot = telebot.TeleBot(ТОКЕН_ВАШЕГО_БОТА)
+bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
 
 @bot.message_handler(commands=['start'])
 def start_menu(message):
