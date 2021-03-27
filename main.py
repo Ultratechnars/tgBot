@@ -85,7 +85,7 @@ def callback_worker(call):
     if categories == 'festival':
         categories = categories + ',' + 'holiday';
     response = requests.get('https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
-    i = randint(0, max(98, response['count']))
+    i = randint(0, min(98, response['count']))
     try:
         placeid = response['results'][i]['place']['id']
         place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
