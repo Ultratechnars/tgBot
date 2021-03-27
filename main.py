@@ -7,6 +7,7 @@ from telebot import types
 
 bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
 age = 0
+idsend = 0
 
 
 def capt(words):
@@ -42,6 +43,8 @@ def start(message):
 
 def get_age(message):
     global age
+    global idsend
+    idsend = message.from_user.id
     if not message.text.isdigit():
         bot.send_message(message.from_user.id, 'Цифрами пожалуйста')
         bot.register_next_step_handler(message, get_age)
@@ -77,11 +80,37 @@ def get_age(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
-    if call.data == "yes": #call.data это callback_data, которую мы указали при объявлении кнопки
-        bot.send_message(call.message.chat.id, 'Запомню : )');
+    global idsend
+    categories = call.data
+    if categories == 'festival':
+        categories = categories + ',' + 'holiday';
+    response = requests.get('https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
+    i = randint(0, 98)
+    try:
+        placeid = response['results'][i]['place']['id']
+        place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
+            'title']
+    except Exception:
+        place = 'Место проведения неизвестно'
+    age = '0+'
+    if response['results'][i]['age_restriction'] is not None:
+        age = str(response['results'][i]['age_restriction'])
+    if age[-1] != '+':
+        age += '+'
+    title = response['results'][i]['title']
+    title = capt(title)
+    place = capt(place)
+    bot.send_message(idsend, title + '\n' \
+                     + response['results'][i]['description'] + '\n' \
+                     + str(
+        datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
+                     + ' - ' + str(
+        datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
+                     + '\n' + place + '\n' \
+                     + age)
 
 
-def get_text_messages(message):
+"""def get_text_messages(message):
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Привет!')
         response = requests.get('https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100').json()
@@ -108,7 +137,7 @@ def get_text_messages(message):
     elif message.text.lower() == '/start' or message.text.lower() == '/help':
         bot.reply_to(message, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия!')
     else:
-        bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
+        bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')"""
 
 
 if __name__ == '__main__':
