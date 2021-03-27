@@ -7,6 +7,7 @@ from telebot import types
 
 bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
 ages = {}
+used = {}
 
 
 def capt(words):
@@ -33,7 +34,7 @@ def first(message):
 
 def start(message):
     if message.text == 'Поехали':
-        bot.send_message(message.from_user.id, "Сколько тебе лет??")
+        bot.send_message(message.from_user.id, "Сколько тебе лет?")
         bot.register_next_step_handler(message, get_age)
     else:
         bot.send_message(message.from_user.id, 'Напиши \'Поехали\'')
@@ -47,7 +48,7 @@ def get_age(message):
         bot.register_next_step_handler(message, get_age)
     else:
         age = int(message.text)
-        ages[message.from_user.id] = age
+        ages[str(message.from_user.id)] = age
         keyboard = types.ReplyKeyboardMarkup(True, True)
         keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
         keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
@@ -87,38 +88,56 @@ def get_event(message):
         bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
         bot.register_next_step_handler(message, get_event)
         return
+    res = []
+    res += response['results']
+    while response['next']:
+        response = requests.get(response['next']).json()
+        res += response['results']
+    ok = False
     i = 0
+    while not ok:
+        ok = True
+        i = randint(0, len(res) - 1)
+        if str(message.from_user.id) not in used:
+            break
+        for j in used[str(message.from_user.id)]:
+            if j == res[i]['id']:
+                ok = False
     ok = False
     agestr = ''
     while not ok:
         ok = True
-        if response['results'][i]['age_restriction'] is not None:
-            agestr = str(response['results'][i]['age_restriction'])
+        if res[i]['age_restriction'] is not None:
+            agestr = str(res[i]['age_restriction'])
             ager = 0
             for j in agestr:
                 if j.isdigit():
                     ager *= 10
                     ager += int(j)
-            agecheck = ages[message.from_user.id]
+            agecheck = ages[str(message.from_user.id)]
             if agecheck < ager:
                 ok = False
         else:
             break
     try:
-        placeid = response['results'][i]['place']['id']
+        placeid = res[i]['place']['id']
         place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
             'title']
     except Exception:
         place = 'Место проведения неизвестно'
-    title = response['results'][i]['title']
+    title = res[i]['title']
     title = capt(title)
     place = capt(place)
+    if message.from_user.id not in used:
+        used[str(message.from_user.id)] = [res[i]['id']]
+    else:
+        used[str(message.from_user.id)].append(res[i]['id'])
     bot.send_message(message.from_user.id, title + '\n' \
-                     + response['results'][i]['description'] + '\n' \
+                     + res[i]['description'] + '\n' \
                      + str(
-        datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
                      + ' - ' + str(
-        datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
                      + '\n' + place + '\n' + agestr)
 
     return
