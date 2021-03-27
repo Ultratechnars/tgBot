@@ -12,10 +12,11 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, response['results'][randint(0, 20)]['title'])
     elif message.text.lower() == 'ууууууу':
         bot.send_message(message.from_user.id, 'УУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУ')
+        bot.send_message(message.from_user.id, 'Ghbdtn')
     elif message.text.lower() == '/start' or message.text.lower() == '/help':
         bot.reply_to(message, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек!')
+
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
-
-
-bot.polling(none_stop=True)
+if __name__ == '__main__':
+    bot.polling(none_stop=True)
