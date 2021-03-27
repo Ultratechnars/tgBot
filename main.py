@@ -8,7 +8,7 @@ def get_text_messages(message):
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Прувет!')
     if message.text.lower() == 'ууууууу':
-        bot.send_message(message.from_user.id, 'УУУУУУУУУУУУ\nУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУ')
+        bot.send_message(message.from_user.id, 'УУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУ')
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
 
