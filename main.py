@@ -99,7 +99,7 @@ def get_event(message):
                     ager *= 10
                     ager += int(j)
             agecheck = ages[message.from_user.id]
-            if agecheck < age:
+            if agecheck < ager:
                 ok = False
         else:
             break
