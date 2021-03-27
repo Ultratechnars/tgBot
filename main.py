@@ -60,6 +60,10 @@ def get_age(message):
 
 def get_event(message):
     categories = ''
+    now = datetime.date.today()
+    startdate = now + datetime.timedelta(days = 1)
+    time = datetime.time(0, 0, 0, 0)
+    startdate = datetime.datetime.combine(startdate, time)
     if message.text == 'Кино🎥':
         categories = 'cinema'
     elif message.text == 'Концерты🎵':
@@ -83,7 +87,7 @@ def get_event(message):
     elif message.text == 'Экскурсии🚌':
         categories = 'tour'
     response = requests.get(
-        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction,images&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
+        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction,images,site_url&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
     if response['count'] == 0:
         bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
         bot.register_next_step_handler(message, get_event)
@@ -93,20 +97,32 @@ def get_event(message):
     while response['next']:
         response = requests.get(response['next']).json()
         res += response['results']
-    ok = False
     i = 0
-    while not ok:
-        ok = True
-        i = randint(0, len(res) - 1)
-        if str(message.from_user.id) not in used:
-            break
-        for j in used[str(message.from_user.id)]:
-            if j == res[i]['id']:
-                ok = False
+    if len(res) == 0:
+        bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
+        bot.register_next_step_handler(message, get_event)
+        return
     ok = False
-    agestr = ''
     while not ok:
-        ok = True
+        i = randint(0, len(res) - 1)
+        ok = False
+        for z in res[i]['dates']:
+            if z['start'] < 0:
+                z['start'] = 0
+            if z['end'] > 2145916800:
+                z['end'] = 2145916800
+            end = datetime.datetime.fromtimestamp(z['end'])
+            starte = datetime.datetime.fromtimestamp(z['start'])
+            if end.month > startdate.month > starte.month:
+                ok = True
+                break
+            elif (startdate.month == end.month and startdate.day <= end.day) or (startdate.month == starte.month and startdate.day >= starte.day):
+                ok = True
+                break
+        if str(message.from_user.id) in used:
+            for j in used[str(message.from_user.id)]:
+                if j == res[i]['id']:
+                    ok = False
         if res[i]['age_restriction'] is not None:
             agestr = str(res[i]['age_restriction'])
             ager = 0
@@ -117,8 +133,6 @@ def get_event(message):
             agecheck = ages[str(message.from_user.id)]
             if agecheck < ager:
                 ok = False
-        else:
-            break
     try:
         placeid = res[i]['place']['id']
         place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
@@ -137,10 +151,10 @@ def get_event(message):
     bot.send_photo(message.from_user.id, img.content, title + '\n' \
                      + res[i]['description'] + '\n' \
                      + str(
-        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m %H:%M')) \
                      + ' - ' + str(
-        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
-                     + '\n' + place)
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m %H:%M')) \
+                     + '\n' + place + '\n' + res[i]['site_url'])
 
     return
 
