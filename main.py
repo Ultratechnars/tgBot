@@ -23,7 +23,7 @@ def get_text_messages(message):
                         + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) \
                         + ' - ' + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) \
                         + '\n' + place.capitalize() + '\n' \
-                        + 'Ограничение: ' +str(response['results'][i]['age_restriction']))
+                        + str(response['results'][i]['age_restriction']))
     elif message.text.lower() == '/start' or message.text.lower() == '/help':
         bot.reply_to(message, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия!')
     else:
