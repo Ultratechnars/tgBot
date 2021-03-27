@@ -16,7 +16,7 @@ def get_text_messages(message):
             place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()['title']
         except Exception:
             place = 'Место проведения неизвестно'
-        bot.send_message(message.from_user.id, response['results'][i]['title'] + '\n' + response['results'][i]['description'] + '\n' + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) + ' - ' + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) + '\n' + place)
+        bot.send_message(message.from_user.id, response['results'][i]['title'].capitalize() + '\n' + response['results'][i]['description'] + '\n' + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['start']).strftime('%d.%m.%y %H:%M')) + ' - ' + str(datetime.datetime.utcfromtimestamp(response['results'][i]['dates'][0]['end']).strftime('%d.%m.%y %H:%M')) + '\n' + place.capitalize())
     elif message.text.lower() == '/start' or message.text.lower() == '/help':
         bot.reply_to(message, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек!')
     else:
