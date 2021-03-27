@@ -9,7 +9,7 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, 'Прувет!')
     elif message.text.lower() == '/start':
         bot.send_message(message.from_user.id,
-                         'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек')
+                         'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек!')
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
 
