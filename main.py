@@ -10,7 +10,7 @@ def get_text_messages(message):
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
 
-@bot.message_handler(content_types=['/start'])
+@bot.message_handler(command=['start'])
 def greetings(message):
     bot.send_message(message.from_user.id, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек')
 
