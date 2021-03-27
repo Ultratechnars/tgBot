@@ -1,26 +1,38 @@
 import telebot
-from telegramcalendar import *
+from telebot import types
+
 
 bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
+
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Прувет!')
-    elif message.text.lower() == 'ууууууу':
-        bot.send_message(message.from_user.id, 'УУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУAAAAAAAAAAAAAAAAAAAAAAAAAAУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУУ')
-    elif message.text.lower() == '/start' or message.text.lower() == '/help':
-        bot.reply_to(message, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ кринж кек!')
-    elif message.text.lower() == '/calendar':
-        now = datetime.datetime.now() #Текущая дата
-        chat_id = message.chat.id
-        date = (now.year,now.month)
-        current_shown_dates[chat_id] = date #Сохраним текущую дату в словарь
-        markup = create_calendar(now.year,now.month)
-        bot.send_message(message.chat.id, "Пожалйста, выберите дату", reply_markup=markup)
-        bot.answer_callback_query(call.id, text="Дата выбрана")
+    elif message.text.lower() == 'УУУУ':
+        bot.send_message(message.from_user.id, 'УУУУУУУУУУУУ\n'
+                                               'УУУУУУУУУУУУУффф')
     else:
-        bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
+        bot.send_message(message.from_user.id, 'Ничего не понимаю')
+    keyboard = types.InlineKeyboardMarkup()
+    key_yes = types.InlineKeyboardButton(text='Да', callback_data='yes')
+    keyboard.add(key_yes)
+    keyboard = types.InlineKeyboardMarkup()
+    key_no = types.InlineKeyboardButton(text='Нет', callback_data='no')
+    keyboard.add(key_no)
+
+
+def callback_worker(call):
+    if call.data == "yes":
+        bot.send_message(call.message.chat.id, 'Запомню : )')
+    elif call.data == "no":
+        bot.send_message(call.message.chat.id, 'Запомню : )')
+
+
+@bot.message_handler(commands=['start'])
+def greetings(message):
+    bot.send_message(message.from_user.id, 'Этот бот будет присылать тебе крутую инфу про разные мероприятия ЛОЛ '
+                                           'кринж кек')
 
 
 bot.polling(none_stop=True)
