@@ -1,10 +1,12 @@
 import telebot
+from telebot_calendar import Calendar, CallbackData, RUSSIAN_LANGUAGE
 import requests
 import datetime
 from random import randint
 from telebot import types
 
-
+calendar = Calendar(language=RUSSIAN_LANGUAGE)
+calendar_1_callback = CallbackData("calendar_1", "action", "year", "month", "day")
 bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
 ages = {}
 used = {}
@@ -61,17 +63,60 @@ def get_age(message):
 def get_date(message):
     if message.text == "Сегодня":
         dates[str(message.from_user.id)] = datetime.date.today()
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+        keyboard.row('Детям👶', 'Квесты🚶')
+        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+        bot.send_message(message.from_user.id, text='Выберите интересующую тебя категорию', reply_markup=keyboard)
+        bot.register_next_step_handler(message, get_event)
     elif message.text == "Завтра":
         dates[str(message.from_user.id)] = datetime.date.today() + datetime.timedelta(days = 1)
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+        keyboard.row('Детям👶', 'Квесты🚶')
+        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+        bot.send_message(message.from_user.id, text='Выберите интересующую тебя категорию', reply_markup=keyboard)
+        bot.register_next_step_handler(message, get_event)
     else:
-        pass #Сделать Календарь
-    keyboard = types.ReplyKeyboardMarkup(True, True)
-    keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
-    keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
-    keyboard.row('Детям👶', 'Квесты🚶')
-    keyboard.row('Спектакли🎭', 'Экскурсии🚌')
-    bot.send_message(message.from_user.id, text='Выберите интересующую тебя категорию', reply_markup=keyboard)
-    bot.register_next_step_handler(message, get_event)
+        now = datetime.datetime.now()  # Get the current date
+        bot.send_message(
+            message.chat.id,
+            "Selected date",
+            reply_markup=calendar.create_calendar(
+                name=calendar_1_callback.prefix,
+                year=now.year,
+                month=now.month,  # Specify the NAME of your calendar
+            ),
+        )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith(calendar_1_callback.prefix))
+def callback_inline(call):
+# At this point, we are sure that this calendar is ours. So we cut the line by the separator of our calendar
+    name, action, year, month, day = call.data.split(calendar_1_callback.sep)
+# Processing the calendar. Get either the date or None if the buttons are of a different type
+    date = calendar.calendar_query_handler(bot=bot, call=call, name=name, action=action, year=year, month=month, day=day)
+# There are additional steps. Let's say if the date DAY is selected, you can execute your code. I sent a message.
+    if action == "DAY":
+        dates[str(call.from_user.id)] = datetime.date(year = int(year), month = int(month), day = int(day))
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+        keyboard.row('Детям👶', 'Квесты🚶')
+        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+        bot.send_message(call.from_user.id, text='Выберите интересующую тебя категорию', reply_markup=keyboard)
+        bot.register_next_step_handler(call.message, get_event)
+    elif action == "CANCEL":
+        bot.send_message(call.from_user.id, text='Отменяю')
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row("Сегодня")
+        keyboard.row("Завтра")
+        keyboard.row("Выбрать дату")
+        bot.send_message(call.from_user.id, text='Когда вы хотите поехать?', reply_markup=keyboard)
+        bot.register_next_step_handler(call.message, get_date)
+
 
 
 def get_event(message):
@@ -159,12 +204,12 @@ def get_event(message):
     try:
         placeid = res[i]['place']['id']
         place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
-            'title'] + '\n'
+            'title']
     except Exception:
         place = ''
     title = res[i]['title']
     title = capt(title)
-    place = capt(place)
+    place = capt(place) + '\n'
     imgsrc = res[i]['images'][0]['image']
     img = requests.get(imgsrc)
     if message.from_user.id not in used:
@@ -175,7 +220,6 @@ def get_event(message):
     keyboard.row("Сегодня")
     keyboard.row("Завтра")
     keyboard.row("Выбрать дату")
-    bot.send_message(message.from_user.id, text='Когда ты хочешь пойти?', reply_markup=keyboard)
     bot.register_next_step_handler(message, get_date)
     bot.send_photo(message.from_user.id, img.content, title + '\n' \
                      + res[i]['description'] + '\n' \
