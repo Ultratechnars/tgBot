@@ -8,6 +8,7 @@ from telebot import types
 bot = telebot.TeleBot('1700380188:AAEUDoBpV9ATgEt-arqvYrdqcmwYi3MWmpc')
 ages = {}
 used = {}
+dates = {}
 
 
 def capt(words):
@@ -50,20 +51,34 @@ def get_age(message):
         age = int(message.text)
         ages[str(message.from_user.id)] = age
         keyboard = types.ReplyKeyboardMarkup(True, True)
-        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
-        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
-        keyboard.row('Детям👶', 'Вечеринки🎆', 'Квесты🚶')
-        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
-        bot.send_message(message.from_user.id, text='Выбери интересующую тебя категорию', reply_markup=keyboard)
-        bot.register_next_step_handler(message, get_event)
+        keyboard.row("Сегодня")
+        keyboard.row("Завтра")
+        keyboard.row("Выбрать дату")
+        bot.send_message(message.from_user.id, text='Когда вы хотите поехать?', reply_markup=keyboard)
+        bot.register_next_step_handler(message, get_date)
+
+
+def get_date(message):
+    if message.text == "Сегодня":
+        dates[str(message.from_user.id)] = datetime.date.today()
+    elif message.text == "Завтра":
+        dates[str(message.from_user.id)] = datetime.date.today() + datetime.timedelta(days = 1)
+    else:
+        pass #Сделать Календарь
+    keyboard = types.ReplyKeyboardMarkup(True, True)
+    keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+    keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+    keyboard.row('Детям👶', 'Квесты🚶')
+    keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+    bot.send_message(message.from_user.id, text='Выберите интересующую тебя категорию', reply_markup=keyboard)
+    bot.register_next_step_handler(message, get_event)
 
 
 def get_event(message):
     categories = ''
-    now = datetime.date.today()
-    startdate = now + datetime.timedelta(days = 1)
-    time = datetime.time(0, 0, 0, 0)
-    startdate = datetime.datetime.combine(startdate, time)
+    startdate = dates[str(message.from_user.id)]
+    startutc = datetime.datetime(year = startdate.year - 1, month = 1, day = 1)
+    startutc = datetime.datetime.timestamp(startutc)
     if message.text == 'Кино🎥':
         categories = 'cinema'
     elif message.text == 'Концерты🎵':
@@ -78,8 +93,6 @@ def get_event(message):
         categories = 'festival,holiday'
     elif message.text == 'Детям👶':
         categories = 'kids'
-    elif message.text == 'Вечеринки🎆':
-        categories = 'party'
     elif message.text == 'Квесты🚶':
         categories = 'quest'
     elif message.text == 'Спектакли🎭':
@@ -87,9 +100,14 @@ def get_event(message):
     elif message.text == 'Экскурсии🚌':
         categories = 'tour'
     response = requests.get(
-        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction,images,site_url&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=1444385206&actual_until=1444385405&page_size=100&categories=' + categories).json()
+        'https://kudago.com/public-api/v1.4/events/?lang=&fields=id,title,description,dates,place,age_restriction,images,site_url&expand=&order_by=&text_format=text&ids=&location=spb&actual_since=' + str(startutc) + '&page_size=100&categories=' + categories).json()
     if response['count'] == 0:
-        bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+        keyboard.row('Детям👶', 'Квесты🚶')
+        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+        bot.send_message(message.from_user.id, text='Ничего нет, увы. Попробуйте другую категорию', reply_markup=keyboard)
         bot.register_next_step_handler(message, get_event)
         return
     res = []
@@ -99,7 +117,13 @@ def get_event(message):
         res += response['results']
     i = 0
     if len(res) == 0:
-        bot.send_message(message.from_user.id, 'Ничего нет, увы. Попробуйте другую категорию!')
+        keyboard = types.ReplyKeyboardMarkup(True, True)
+        keyboard.row('Кино🎥', 'Концерты🎵', 'Обучение📕')
+        keyboard.row('Выставки🖼', 'Мода и стиль💄', 'Фестивали🎊')
+        keyboard.row('Детям👶', 'Квесты🚶')
+        keyboard.row('Спектакли🎭', 'Экскурсии🚌')
+        bot.send_message(message.from_user.id, text='Ничего нет, увы. Попробуйте другую категорию',
+                         reply_markup=keyboard)
         bot.register_next_step_handler(message, get_event)
         return
     ok = False
@@ -112,11 +136,10 @@ def get_event(message):
             if z['end'] > 2145916800:
                 z['end'] = 2145916800
             end = datetime.datetime.fromtimestamp(z['end'])
+            endd = datetime.date(end.year, end.month, end.day)
             starte = datetime.datetime.fromtimestamp(z['start'])
-            if end.month > startdate.month > starte.month:
-                ok = True
-                break
-            elif (startdate.month == end.month and startdate.day <= end.day) or (startdate.month == starte.month and startdate.day >= starte.day):
+            startd = datetime.date(starte.year, starte.month, starte.day)
+            if endd >= startdate >= startd:
                 ok = True
                 break
         if str(message.from_user.id) in used:
@@ -136,9 +159,9 @@ def get_event(message):
     try:
         placeid = res[i]['place']['id']
         place = requests.get('https://kudago.com/public-api/v1.4/places/' + str(placeid) + '/?fields=title').json()[
-            'title']
+            'title'] + '\n'
     except Exception:
-        place = 'Место проведения неизвестно'
+        place = ''
     title = res[i]['title']
     title = capt(title)
     place = capt(place)
@@ -148,14 +171,20 @@ def get_event(message):
         used[str(message.from_user.id)] = [res[i]['id']]
     else:
         used[str(message.from_user.id)].append(res[i]['id'])
+    keyboard = types.ReplyKeyboardMarkup(True, True)
+    keyboard.row("Сегодня")
+    keyboard.row("Завтра")
+    keyboard.row("Выбрать дату")
+    bot.send_message(message.from_user.id, text='Когда ты хочешь пойти?', reply_markup=keyboard)
+    bot.register_next_step_handler(message, get_date)
     bot.send_photo(message.from_user.id, img.content, title + '\n' \
                      + res[i]['description'] + '\n' \
                      + str(
-        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m %H:%M')) \
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['start']).strftime('%d.%m.%Y %H:%M')) \
                      + ' - ' + str(
-        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m %H:%M')) \
-                     + '\n' + place + '\n' + res[i]['site_url'])
-
+        datetime.datetime.utcfromtimestamp(res[i]['dates'][0]['end']).strftime('%d.%m.%Y %H:%M')) \
+                     + '\n' + place + res[i]['site_url'] + '\n' + 'Когда хотите поехать в следующий раз?', reply_markup=keyboard)
+    bot.register_next_step_handler(message, get_date)
     return
 
 
